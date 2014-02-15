@@ -4,7 +4,7 @@
 
 	<groupId>com.jcraft</groupId>
 	<artifactId>jsch</artifactId>
-	<version>0.1.71</version>
+	<version>0.1.50</version>
 	<packaging>jar</packaging>
 
 	<name>JSch</name>

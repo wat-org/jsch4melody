@@ -29,18 +29,23 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch.jce;
 
-public class HMACMD596 extends HMACMD5 {
-  public HMACMD596(){
-    name="hmac-md5-96";
+import com.jcraft.jsch.HASH;
+
+import java.security.*;
+
+public class SHA256 implements HASH {
+  MessageDigest md;
+  public int getBlockSize(){return 32;}
+  public void init() throws Exception {
+    try{ md=MessageDigest.getInstance("SHA-256"); }
+    catch(Exception e){
+      System.err.println(e);
+    }
   }
-
-  public int getBlockSize(){
-    return 12;
-  };
-
-  private final byte[] _buf16 = new byte[16];
-  public void doFinal(byte[] buf, int offset){
-    super.doFinal(_buf16, 0);
-    System.arraycopy(_buf16, 0, buf, offset, 12);
+  public void update(byte[] foo, int start, int len) throws Exception {
+    md.update(foo, start, len);
+  }
+  public byte[] digest() throws Exception {
+    return md.digest();
   }
 }
