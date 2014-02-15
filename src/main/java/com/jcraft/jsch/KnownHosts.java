@@ -41,19 +41,27 @@ class KnownHosts implements HostKeyRepository{
   static final int UNKNOWN=2;
   */
 
-  private JSch jsch=null;
+  // FEAT : 0.1.50-p1 : don't want any link to Jsch
+  //private JSch jsch=null;
+  private String hash=null;
   private String known_hosts=null;
   private java.util.Vector pool=null;
 
   private MAC hmacsha1=null;
 
-  KnownHosts(JSch jsch){
+  // FEAT : 0.1.50-p1 : don't want any link to Jsch
+  public KnownHosts(){
+    this(com.jcraft.jsch.jce.HMACSHA1.class.getCanonicalName());
+  }
+  public KnownHosts(String hash) {
     super();
-    this.jsch=jsch;
+    this.hash=hash;
     pool=new java.util.Vector();
   }
 
-  void setKnownHosts(String foo) throws JSchException{
+  // FEAT : 0.1.50-p1 : make it public
+  //void setKnownHosts(String foo) throws JSchException{
+  public void setKnownHosts(String foo) throws JSchException{
     try{
       known_hosts = foo;
       FileInputStream fis=new FileInputStream(Util.checkTilde(foo));
@@ -62,14 +70,18 @@ class KnownHosts implements HostKeyRepository{
     catch(FileNotFoundException e){
     } 
   }
-  void setKnownHosts(InputStream foo) throws JSchException{
+  // FEAT : 0.1.50-p1 : make it public
+  //void setKnownHosts(InputStream foo) throws JSchException{
+  public void setKnownHosts(InputStream foo) throws JSchException{
     pool.removeAllElements();
     StringBuffer sb=new StringBuffer();
     byte i;
     int j;
     boolean error=false;
+    // FEAT : 0.1.50-p1 : close fis when exception raise. see 'finally' bellow.
+    InputStream fis=foo;
     try{
-      InputStream fis=foo;
+      //InputStream fis=foo;
       String host;
       String key=null;
       int type;
@@ -218,12 +230,18 @@ loop:
 	//System.err.println("|"+key+"|");
 
 	HostKey hk = null;
+    // FEAT : 0.1.50-p1 : Util.fromBase64 will fail with ArrayIndexOutOfBoundsException if the key is not properly encoded. So we catch/throw the error.
+    try{
         hk = new HashedHostKey(marker, host, type, 
                                Util.fromBase64(Util.str2byte(key), 0, 
                                                key.length()), comment);
+    } catch(java.lang.ArrayIndexOutOfBoundsException Ex) {
+    	throw new JSchException("KnownHosts: invalid format", Ex);
+    }
 	pool.addElement(hk);
       }
-      fis.close();
+      // FEAT : 0.1.50-p1 : close fis when exception raise. see 'finally' bellow.
+      //fis.close();
       if(error){
 	throw new JSchException("KnownHosts: invalid format");
       }
@@ -234,6 +252,12 @@ loop:
       if(e instanceof Throwable)
         throw new JSchException(e.toString(), (Throwable)e);
       throw new JSchException(e.toString());
+    } finally {
+      // FEAT : 0.1.50-p1 : close fis when exception raise
+      if (fis != null){
+        try{fis.close();}
+        catch(IOException e){}
+        }
     }
   }
   private void addInvalidLine(String line) throws JSchException {
@@ -297,13 +321,20 @@ loop:
 	    break;
 	  }
 */
+          // FEAT : 0.1.50-p1 : return if the key is already present; remove the old key if it has changed
+          switch( check(host, key) ){
+          case OK : return;
+          case CHANGED : remove(host, hostkey.getType());
+          }
         }
       }
     }
 
     hk=hostkey;
 
-    pool.addElement(hk);
+    // FEAT : 0.1.50-p1 : better add the original hostkey
+    //pool.addElement(hk);
+    pool.addElement(hostkey);
 
     String bar=getKnownHostsRepositoryID();
     if(bar!=null){
@@ -480,7 +511,9 @@ loop:
   private synchronized MAC getHMACSHA1(){
     if(hmacsha1==null){
       try{
-        Class c=Class.forName(jsch.getConfig("hmac-sha1"));
+        // FEAT : 0.1.50-p1 : don't want any link to Jsch
+        //Class c=Class.forName(jsch.getConfig("hmac-sha1"));
+        Class c=Class.forName(hash);
         hmacsha1=(MAC)(c.newInstance());
       }
       catch(Exception e){ 

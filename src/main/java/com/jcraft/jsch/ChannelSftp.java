@@ -29,8 +29,14 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch;
 
-import java.io.*;
-
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.Vector;
 
 public class ChannelSftp extends ChannelSession{
@@ -1782,7 +1788,8 @@ public class ChannelSftp extends ChannelSession{
      try{
        ((MyPipedInputStream)io_in).updateReadSide();
 
-       oldpath=remoteAbsolutePath(oldpath);
+       // FEAT : 0.1.50-p1 : we don't want to transform oldpath in an absolute path !
+       // oldpath=remoteAbsolutePath(oldpath);
        newpath=remoteAbsolutePath(newpath);
 
        oldpath=isUnique(oldpath);
@@ -1827,7 +1834,8 @@ public class ChannelSftp extends ChannelSession{
      try{
        ((MyPipedInputStream)io_in).updateReadSide();
 
-       oldpath=remoteAbsolutePath(oldpath);
+       // FEAT : 0.1.50-p1 : we don't want to transform oldpath in an absolute path !
+       // oldpath=remoteAbsolutePath(oldpath);
        newpath=remoteAbsolutePath(newpath);
 
        oldpath=isUnique(oldpath);

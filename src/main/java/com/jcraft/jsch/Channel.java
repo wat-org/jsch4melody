@@ -29,11 +29,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch;
 
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 
 
 public abstract class Channel implements Runnable{
@@ -573,10 +573,14 @@ public abstract class Channel implements Runnable{
     this.session=session;
   }
 
-  public Session getSession() throws JSchException{ 
+  // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+  // public Session getSession() throw JSchException{ 
+  public Session getSession(){ 
     Session _session=session;
     if(_session==null){
-      throw new JSchException("session is not available");
+      // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+      // throw new JSchException("session is not available");
+      throw new IllegalStateException("session is not available");
     }
     return _session;
   }

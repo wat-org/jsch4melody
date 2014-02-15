@@ -29,7 +29,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch;
 
-import java.net.*;
 import java.util.Vector;
 
 class ChannelAgentForwarding extends Channel{
@@ -117,7 +116,9 @@ class ChannelAgentForwarding extends Channel{
     try{
       _session=getSession();
     }
-    catch(JSchException e){
+    // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+    // catch(JSchException e){
+    catch(IllegalStateException e){
       throw new java.io.IOException(e.toString());
     }
 

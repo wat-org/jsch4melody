@@ -45,6 +45,10 @@ public class Buffer{
     s=0;
   }
   public Buffer(){ this(1024*10*2); }
+  // FEAT : 0.1.50-p1 : introduce getBytes(), which allow to retrieve the raw buffer
+  public byte[] getBytes() {
+    return buffer;
+  }
   public void putByte(byte foo){
     buffer[index++]=foo;
   }

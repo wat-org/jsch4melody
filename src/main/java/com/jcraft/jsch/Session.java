@@ -107,6 +107,8 @@ public class Session implements Runnable{
   private boolean isAuthed=false;
 
   private Thread connectThread=null;
+  // FEAT : 0.1.50-p1 : introduce getConnectThread(), which allow caller to manipulate it.
+  public Thread getConnectThread() { return connectThread; }
   private Object lock=new Object();
 
   boolean x11_forwarding=false;
@@ -1240,7 +1242,11 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
           throw new JSchException("timeout in wating for rekeying process.");
         }
         try{Thread.sleep(10);}
-        catch(java.lang.InterruptedException e){};
+        // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
+        //catch(java.lang.InterruptedException e){};
+        catch(java.lang.InterruptedException e){
+          throw new java.io.InterruptedIOException();
+        };
         continue;
       }
       synchronized(c){
@@ -1250,7 +1256,9 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
             c.notifyme++;
             c.wait(100); 
           }
+          // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
           catch(java.lang.InterruptedException e){
+            throw new java.io.InterruptedIOException();
           }
           finally{
             c.notifyme--;
@@ -1342,7 +1350,11 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
         break;
       }
       try{Thread.sleep(10);}
-      catch(java.lang.InterruptedException e){};
+      // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
+      //catch(java.lang.InterruptedException e){};
+      catch(java.lang.InterruptedException e){
+        throw new java.io.InterruptedIOException();
+      };
     }
     _write(packet);
   }
@@ -2651,7 +2663,9 @@ break;
 
     value = config.getValue("UserKnownHostsFile");
     if(value != null) {
-      KnownHosts kh = new KnownHosts(jsch);
+      // FEAT : 0.1.50-p1 : KnownHosts is no more link to Jsch
+      //KnownHosts kh = new KnownHosts(jsch);
+      KnownHosts kh = new KnownHosts(jsch.getConfig("hmac-sha1"));
       kh.setKnownHosts(value);
       this.setHostKeyRepository(kh);
     }

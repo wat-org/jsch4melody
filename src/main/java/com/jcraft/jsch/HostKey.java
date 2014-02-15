@@ -75,6 +75,10 @@ public class HostKey{
     if(type==SSHRSA){ return Util.byte2str(sshrsa);}
     return "UNKNOWN";
   }
+  // FEAT : 0.1.50-p1 : introduce getKeyBytes(), which allow to retrieve the raw buffer
+  public byte[] getKeyBytes(){
+    return key;
+  }
   public String getKey(){
     return Util.byte2str(Util.toBase64(key, 0, key.length));
   }

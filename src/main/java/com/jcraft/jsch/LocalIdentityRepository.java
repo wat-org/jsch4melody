@@ -31,13 +31,17 @@ package com.jcraft.jsch;
 
 import java.util.Vector;
 
-class LocalIdentityRepository implements IdentityRepository {
+// FEAT : 0.1.50-p1 : make it public
+//class LocalIdentityRepository implements IdentityRepository {
+public class LocalIdentityRepository implements IdentityRepository {
   private static final String name = "Local Identity Repository";
 
   private Vector identities = new Vector();
   private JSch jsch;
 
-  LocalIdentityRepository(JSch jsch){
+  //FEAT : 0.1.50-p1 : make it public
+  //LocalIdentityRepository(JSch jsch){
+  public LocalIdentityRepository(JSch jsch){
     this.jsch = jsch;
   }
 
@@ -72,6 +76,22 @@ class LocalIdentityRepository implements IdentityRepository {
     }
     catch(JSchException e){
       return false;
+    }
+  }
+  
+  //FEAT : 0.1.50-p1 : add this cool method
+  public synchronized void add(String prvkey, String passphrase) throws JSchException {
+    byte[] _passphrase=null;
+    if(passphrase!=null){
+      _passphrase=Util.str2byte(passphrase);
+    }
+
+    Identity identity=IdentityFile.newInstance(prvkey, null, jsch);
+    identity.setPassphrase(_passphrase); 
+    add(identity);
+
+    if(_passphrase!=null){
+      Util.bzero(_passphrase);
     }
   }
 

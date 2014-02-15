@@ -293,7 +293,9 @@ public class JSch{
    * @see com.jcraft.jsch.KnownHosts
    */
   public void setKnownHosts(String filename) throws JSchException{
-    if(known_hosts==null) known_hosts=new KnownHosts(this);
+    // FEAT : 0.1.50-p1 : KnownHosts is no more link to Jsch
+    //if(known_hosts==null) known_hosts=new KnownHosts(this);
+    if(known_hosts==null) known_hosts=new KnownHosts(getConfig("hmac-sha1"));
     if(known_hosts instanceof KnownHosts){
       synchronized(known_hosts){
 	((KnownHosts)known_hosts).setKnownHosts(filename); 
@@ -313,7 +315,9 @@ public class JSch{
    * @see com.jcraft.jsch.KnownHosts
    */
   public void setKnownHosts(InputStream stream) throws JSchException{ 
-    if(known_hosts==null) known_hosts=new KnownHosts(this);
+    // FEAT : 0.1.50-p1 : KnownHosts is no more link to Jsch
+    //if(known_hosts==null) known_hosts=new KnownHosts(this);
+    if(known_hosts==null) known_hosts=new KnownHosts(getConfig("hmac-sha1"));
     if(known_hosts instanceof KnownHosts){
       synchronized(known_hosts){
 	((KnownHosts)known_hosts).setKnownHosts(stream); 
@@ -331,7 +335,9 @@ public class JSch{
    * @see com.jcraft.jsch.KnownHosts
    */
   public HostKeyRepository getHostKeyRepository(){ 
-    if(known_hosts==null) known_hosts=new KnownHosts(this);
+    // FEAT : 0.1.50-p1 : KnownHosts is no more link to Jsch
+    //if(known_hosts==null) known_hosts=new KnownHosts(this);
+    if(known_hosts==null) known_hosts=new KnownHosts(getConfig("hmac-sha1"));
     return known_hosts; 
   }
 

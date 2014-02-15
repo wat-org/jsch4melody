@@ -375,6 +375,8 @@ class Util{
       message="timeout: ";
     }
     catch(java.lang.InterruptedException eee){
+      // FEAT : 0.1.50-p1 : when interrupted, we want to be notify !
+      throw new JSchExceptionInterrupted("Create socket interrupted.");
     }
     if(sockp[0]!=null && sockp[0].isConnected()){
       socket=sockp[0];

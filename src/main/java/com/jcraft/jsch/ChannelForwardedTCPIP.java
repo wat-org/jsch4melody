@@ -29,8 +29,8 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch;
 
-import java.net.*;
-import java.io.*;
+import java.io.PipedOutputStream;
+import java.net.Socket;
 import java.util.Vector;
 
 public class ChannelForwardedTCPIP extends Channel{
@@ -148,7 +148,9 @@ public class ChannelForwardedTCPIP extends Channel{
     try{
       _session=getSession();
     }
-    catch(JSchException e){
+    // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+    // catch(JSchException e){
+    catch(IllegalStateException e){
       // session has been already down.
     }
 
@@ -245,7 +247,9 @@ public class ChannelForwardedTCPIP extends Channel{
     try{
       _session=c.getSession();
     }
-    catch(JSchException e){
+    // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+    // catch(JSchException e){
+    catch(IllegalStateException e){
       // session has been already down.
     }
     if(_session!=null && c.config!=null)
