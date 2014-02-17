@@ -1,0 +1,110 @@
+Hi guy,
+
+
+I've been using JSch for a while and I consider this is a pretty good Java Ssh implementation.
+The feature it provides are really complete ! but the source dode is a little... confusing. doesn't really matter !
+I've integrated JSch into my onw Java application and while doing this, I have been constrainted to modify the original JSch source code in order to feat my needs.
+
+You should examline the modification/correction i've introduced into your orginal source code.
+I'm quite sure these modification will interrest every single JSch users.
+
+In this mail, I will present you my work and try to convience you to merge it in the official source code.
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+FEATURES
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+1  /////// Make the class com.jcraft.jsch.KnowHost more generic
+This class shouldn't be linked to JSch. instead, this class should directly contain the desired 'hash'.
+Doing so, this class utilization possibility will increase, potientially used by any applcation, without the need to build a useless JSch object.
+
+
+2  /////// Don't ignore InterruptedException
+An interruption signal should never be disacrded. Interruption are the sole way for an application/framework to shutdown properly.
+When an interruption signal is received by a thread, it is a meaningfull signal which notifies the thread that it has to shut down properly.
+In order to achieve this, all program should always rethrow InterruptedException to the caller, after ensuring it shutdown process is finished.
+When you mask an interrption, the interruption signal is lost and this means there is no way for the caller to stop what's your framework is doing. This is a major problem.
+The solution is simple and easy : You don't have to be afraid to add an InterruptedException in the 'throws' clause of your method's prorotype.
+
+For this reason, I've identify some place in the source code where Interruption signal are lost. This should be corrected, and the correction is simple/stupid :)
+
+2a /// com.jcraft.jsch.Util.createSocket(String, int, int)
+In this particular situation, I've decided to create a JSchExceptionInterrupted. Using this strategy, it was not necessary to modify the prototype of the method...
+It is now necessary for the caller to correctly catch the JSchExceptionInterrupted and to understand that it is equivalent to an InterruptedException.
+
+2b /// com.jcraft.jsch.Session.write(Packet, Channel, int)
+In this situation, we can directly re-throw InterruptedException without impact on the method prototype.
+
+
+3  /////// Identities manipulation, using Session's public methods
+Because the Session could define its own IdentityRepository, the Session should provide an easy way to manipulate Identities it contains (just as JSch do!).
+For this particualr reason, I used another solution :)
+I change the visibility of LocalIdentityRepository from private to public. Doing so, I can populate Identities easily, and then populate the Session with it.
+
+
+4  /////// Only throw JSchException when necessary.
+Exception handling is the real hard side of all application...
+In the particular case of the method Channel.getSession(), I consider it shouldn't throw an JSchException. An IllegalStateException (which is a Runtime one) will be much more appropriate.
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+BUGS
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+1  /////// com.jcraft.jsch.KnowHost.setKnownHosts(InputStream)
+this method doesn't correctly handle its InputStream variable.
+For this reason, I add a finally clause, which aiml is to properly close the stream.
+
+
+2  /////// com.jcraft.jsch.KnowHost.setKnownHosts(InputStream)
+this method doesn't correctly handle errors if the given known host file have an invalid content.
+For this reason, I catch the IndexOutOfBoundException which raises when base 64 decoding fails.
+
+
+3  /////// com.jcraft.jsch.KnowHost.add(HostKey, UserInfo)
+I consider this method should be protected aginst multiple insertions of the same host key.
+For this reason, I a add a test at the very begining of the method, which will return immediately if the host key already exists and will remove it if it has changed.
+
+
+4  /////// com.jcraft.jsch.ChannelSftp.symlink(String, String)
+This method always conver the given symlink's target (oldpath) to an absolute path. Why ?
+It disallow to keep the given syslink's target relative.
+I consider this is the caller responsability to provide an absolute or a relative path, regarding their needs.
+For this reason, I remove the relative to absolute convertion of the symlink's target.
+
+
+5  /////// com.jcraft.jsch.ChannelSftp.hardlink(String, String)
+Same as 4
+
+
+6  /////// com.jcraft.jsch.Buffer
+For my application needs, I must access to the raw data of this object ...
+For this reason, I introduce the method getBytes(), which allow to retrieve the raw buffer.
+
+
+7  /////// com.jcraft.jsch.HostKey
+For my application needs, I must access to the raw data of this object ...
+For this reason, I introduce the method getKeyBytes(), which allow to retrieve the raw buffer.
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+TODO LIST
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+1  /////// I've heard that Sftp latest version protocol supports POSIX ACL.
+We you aware of this ?
+Will it be possible for this feature to be included in ChannelSftp ?
+
+
+
+
+
+
+
+
+
