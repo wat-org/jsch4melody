@@ -28,10 +28,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package com.jcraft.jsch;
-import java.net.Socket;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.Socket;
 
 class Util{
 
@@ -376,6 +376,9 @@ class Util{
     }
     catch(java.lang.InterruptedException eee){
       // FEAT : 0.1.50-p1 : when interrupted, we want to be notify !
+      tmp.interrupt();
+      tmp=null;
+      sockp[0]=null;
       throw new JSchExceptionInterrupted("Create socket interrupted.");
     }
     if(sockp[0]!=null && sockp[0].isConnected()){
