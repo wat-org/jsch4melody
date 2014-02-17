@@ -1241,12 +1241,10 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
         if(t>0L && (System.currentTimeMillis()-kex_start_time)>t){
           throw new JSchException("timeout in wating for rekeying process.");
         }
-        try{Thread.sleep(10);}
         // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
-        //catch(java.lang.InterruptedException e){};
-        catch(java.lang.InterruptedException e){
-          throw new java.io.InterruptedIOException();
-        };
+        //try{Thread.sleep(10);}
+        //catch(java.lang.InterruptedException e){}
+        Thread.sleep(10);
         continue;
       }
       synchronized(c){
@@ -1257,9 +1255,7 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
             c.wait(100); 
           }
           // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
-          catch(java.lang.InterruptedException e){
-            throw new java.io.InterruptedIOException();
-          }
+          //catch(java.lang.InterruptedException e){}
           finally{
             c.notifyme--;
           }
@@ -1349,12 +1345,10 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
          command==SSH_MSG_DISCONNECT){
         break;
       }
-      try{Thread.sleep(10);}
       // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
+      //try{Thread.sleep(10);}
       //catch(java.lang.InterruptedException e){};
-      catch(java.lang.InterruptedException e){
-        throw new java.io.InterruptedIOException();
-      };
+      Thread.sleep(10);
     }
     _write(packet);
   }
