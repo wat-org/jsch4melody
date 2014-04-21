@@ -1,6 +1,6 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 /*
-Copyright (c) 2002-2012 ymnk, JCraft,Inc. All rights reserved.
+Copyright (c) 2002-2014 ymnk, JCraft,Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,8 +29,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.util.Vector;
 
 public class Session implements Runnable{
@@ -107,7 +110,7 @@ public class Session implements Runnable{
   private boolean isAuthed=false;
 
   private Thread connectThread=null;
-  // FEAT : 0.1.50-p1 : introduce getConnectThread(), which allow caller to manipulate it.
+  // FEAT : 0.1.51-p1 : introduce getConnectThread(), which allow caller to manipulate it.
   public Thread getConnectThread() { return connectThread; }
   private Object lock=new Object();
 
@@ -539,19 +542,20 @@ public class Session implements Runnable{
     }
     catch(Exception e) {
       in_kex=false;
-      if(isConnected){
-	try{
-	  packet.reset();
-	  buf.putByte((byte)SSH_MSG_DISCONNECT);
-	  buf.putInt(3);
-	  buf.putString(Util.str2byte(e.toString()));
-	  buf.putString(Util.str2byte("en"));
-	  write(packet);
-	  disconnect();
-	}
-	catch(Exception ee){
-	}
+      try{
+        if(isConnected){
+          String message = e.toString();
+          packet.reset();
+          buf.checkFreeSize(1+4*3+message.length()+2+buffer_margin);
+          buf.putByte((byte)SSH_MSG_DISCONNECT);
+          buf.putInt(3);
+          buf.putString(Util.str2byte(message));
+          buf.putString(Util.str2byte("en"));
+          write(packet);
+        }
       }
+      catch(Exception ee){}
+      try{ disconnect(); } catch(Exception ee){ }
       isConnected=false;
       //e.printStackTrace();
       if(e instanceof RuntimeException) throw (RuntimeException)e;
@@ -1021,7 +1025,7 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
 	  if(c==null){
 	  }
 	  else{
-	    c.addRemoteWindowSize(buf.getInt()); 
+	    c.addRemoteWindowSize(buf.getUInt()); 
 	  }
       }
       else if(type==UserAuth.SSH_MSG_USERAUTH_SUCCESS){
@@ -1241,7 +1245,7 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
         if(t>0L && (System.currentTimeMillis()-kex_start_time)>t){
           throw new JSchException("timeout in wating for rekeying process.");
         }
-        // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
+        // FEAT : 0.1.51-p1 : we want to the caller to be notify of interruption
         //try{Thread.sleep(10);}
         //catch(java.lang.InterruptedException e){}
         Thread.sleep(10);
@@ -1254,8 +1258,9 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
             c.notifyme++;
             c.wait(100); 
           }
-          // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
-          //catch(java.lang.InterruptedException e){}
+          // FEAT : 0.1.51-p1 : we want to the caller to be notify of interruption
+          //catch(java.lang.InterruptedException e){
+          //}
           finally{
             c.notifyme--;
           }
@@ -1345,7 +1350,7 @@ key_type+" key fingerprint is "+key_fprint+".\n"+
          command==SSH_MSG_DISCONNECT){
         break;
       }
-      // FEAT : 0.1.50-p1 : we want to the caller to be notify of interruption
+      // FEAT : 0.1.51-p1 : we want to the caller to be notify of interruption
       //try{Thread.sleep(10);}
       //catch(java.lang.InterruptedException e){};
       Thread.sleep(10);
@@ -1500,7 +1505,7 @@ break;
 	  if(channel==null){
 	    break;
 	  }
-	  channel.addRemoteWindowSize(buf.getInt()); 
+	  channel.addRemoteWindowSize(buf.getUInt()); 
 	  break;
 
 	case SSH_MSG_CHANNEL_EOF:
@@ -1540,33 +1545,30 @@ break;
 	  buf.getShort(); 
 	  i=buf.getInt(); 
 	  channel=Channel.getChannel(i, this);
-	  if(channel==null){
-	    //break;
-	  }
           int r=buf.getInt();
           long rws=buf.getUInt();
           int rps=buf.getInt();
-
-          channel.setRemoteWindowSize(rws);
-          channel.setRemotePacketSize(rps);
-          channel.open_confirmation=true;
-          channel.setRecipient(r);
+          if(channel!=null){
+            channel.setRemoteWindowSize(rws);
+            channel.setRemotePacketSize(rps);
+            channel.open_confirmation=true;
+            channel.setRecipient(r);
+          }
           break;
 	case SSH_MSG_CHANNEL_OPEN_FAILURE:
           buf.getInt(); 
 	  buf.getShort(); 
 	  i=buf.getInt(); 
 	  channel=Channel.getChannel(i, this);
-	  if(channel==null){
-	    //break;
-	  }
-	  int reason_code=buf.getInt(); 
-	  //foo=buf.getString();  // additional textual information
-	  //foo=buf.getString();  // language tag 
-          channel.setExitStatus(reason_code);
-          channel.close=true;
-	  channel.eof_remote=true;
-	  channel.setRecipient(0);
+          if(channel!=null){
+            int reason_code=buf.getInt(); 
+            //foo=buf.getString();  // additional textual information
+            //foo=buf.getString();  // language tag 
+            channel.setExitStatus(reason_code);
+            channel.close=true;
+            channel.eof_remote=true;
+            channel.setRecipient(0);
+          }
 	  break;
 	case SSH_MSG_CHANNEL_REQUEST:
           buf.getInt(); 
@@ -1622,8 +1624,8 @@ break;
               tmp.setDaemon(daemon_thread);
             }
 	    tmp.start();
-	    break;
 	  }
+          break;
 	case SSH_MSG_CHANNEL_SUCCESS:
           buf.getInt(); 
 	  buf.getShort(); 
@@ -2446,11 +2448,17 @@ break;
                            "CheckCiphers: "+ciphers);
     }
 
+    String cipherc2s=getConfig("cipher.c2s");
+    String ciphers2c=getConfig("cipher.s2c");
+
     Vector result=new Vector();
     String[] _ciphers=Util.split(ciphers, ",");
     for(int i=0; i<_ciphers.length; i++){
-      if(!checkCipher(getConfig(_ciphers[i]))){
-        result.addElement(_ciphers[i]);
+      String cipher=_ciphers[i];
+      if(ciphers2c.indexOf(cipher) == -1 && cipherc2s.indexOf(cipher) == -1)
+        continue;
+      if(!checkCipher(getConfig(cipher))){
+        result.addElement(cipher);
       }
     }
     if(result.size()==0)
@@ -2548,8 +2556,7 @@ break;
   }
 
   /**
-   * Sets the hostkeyRepository, which will be referred
-   * in the host key checking.
+   * Sets the hostkeyRepository, which will be referred in checking host keys. 
    *
    * @param hostkeyRepository 
    * @see #getHostKeyRepository()
@@ -2657,7 +2664,7 @@ break;
 
     value = config.getValue("UserKnownHostsFile");
     if(value != null) {
-      // FEAT : 0.1.50-p1 : KnownHosts is no more link to Jsch
+      // FEAT : 0.1.51-p1 : KnownHosts is no more link to Jsch
       //KnownHosts kh = new KnownHosts(jsch);
       KnownHosts kh = new KnownHosts(jsch.getConfig("hmac-sha1"));
       kh.setKnownHosts(value);

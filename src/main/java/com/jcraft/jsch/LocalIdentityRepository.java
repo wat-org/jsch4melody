@@ -1,6 +1,6 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 /*
-Copyright (c) 2012 ymnk, JCraft,Inc. All rights reserved.
+Copyright (c) 2012-2014 ymnk, JCraft,Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,7 @@ package com.jcraft.jsch;
 
 import java.util.Vector;
 
-// FEAT : 0.1.50-p1 : make it public
+// FEAT : 0.1.51-p1 : make it public
 //class LocalIdentityRepository implements IdentityRepository {
 public class LocalIdentityRepository implements IdentityRepository {
   private static final String name = "Local Identity Repository";
@@ -39,7 +39,7 @@ public class LocalIdentityRepository implements IdentityRepository {
   private Vector identities = new Vector();
   private JSch jsch;
 
-  //FEAT : 0.1.50-p1 : make it public
+  //FEAT : 0.1.51-p1 : make it public
   //LocalIdentityRepository(JSch jsch){
   public LocalIdentityRepository(JSch jsch){
     this.jsch = jsch;
@@ -79,7 +79,7 @@ public class LocalIdentityRepository implements IdentityRepository {
     }
   }
   
-  //FEAT : 0.1.50-p1 : add this cool method
+  //FEAT : 0.1.51-p1 : add this cool method
   public synchronized void add(String prvkey, String passphrase) throws JSchException {
     byte[] _passphrase=null;
     if(passphrase!=null){

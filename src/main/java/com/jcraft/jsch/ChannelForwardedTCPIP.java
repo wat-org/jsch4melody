@@ -1,6 +1,6 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 /*
-Copyright (c) 2002-2012 ymnk, JCraft,Inc. All rights reserved.
+Copyright (c) 2002-2014 ymnk, JCraft,Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -148,7 +148,7 @@ public class ChannelForwardedTCPIP extends Channel{
     try{
       _session=getSession();
     }
-    // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+    // FEAT : 0.1.51-p1 : getSession() throws IllegalStateException instead of JSchException
     // catch(JSchException e){
     catch(IllegalStateException e){
       // session has been already down.
@@ -247,7 +247,7 @@ public class ChannelForwardedTCPIP extends Channel{
     try{
       _session=c.getSession();
     }
-    // FEAT : 0.1.50-p1 : getSession() throws IllegalStateException instead of JSchException
+    // FEAT : 0.1.51-p1 : getSession() throws IllegalStateException instead of JSchException
     // catch(JSchException e){
     catch(IllegalStateException e){
       // session has been already down.

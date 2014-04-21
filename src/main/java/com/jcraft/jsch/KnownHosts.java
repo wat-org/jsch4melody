@@ -1,6 +1,6 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 /*
-Copyright (c) 2002-2012 ymnk, JCraft,Inc. All rights reserved.
+Copyright (c) 2002-2014 ymnk, JCraft,Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,13 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.jcraft.jsch;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public
 class KnownHosts implements HostKeyRepository{
@@ -41,7 +47,7 @@ class KnownHosts implements HostKeyRepository{
   static final int UNKNOWN=2;
   */
 
-  // FEAT : 0.1.50-p1 : don't want any link to Jsch
+  // FEAT : 0.1.51-p1 : don't want any link to Jsch
   //private JSch jsch=null;
   private String hash=null;
   private String known_hosts=null;
@@ -49,7 +55,7 @@ class KnownHosts implements HostKeyRepository{
 
   private MAC hmacsha1=null;
 
-  // FEAT : 0.1.50-p1 : don't want any link to Jsch
+  // FEAT : 0.1.51-p1 : don't want any link to Jsch
   public KnownHosts(){
     this(com.jcraft.jsch.jce.HMACSHA1.class.getCanonicalName());
   }
@@ -59,29 +65,28 @@ class KnownHosts implements HostKeyRepository{
     pool=new java.util.Vector();
   }
 
-  // FEAT : 0.1.50-p1 : make it public
-  //void setKnownHosts(String foo) throws JSchException{
-  public void setKnownHosts(String foo) throws JSchException{
+  // FEAT : 0.1.51-p1 : make it public
+  //void setKnownHosts(String filename) throws JSchException{
+  public void setKnownHosts(String filename) throws JSchException{
     try{
-      known_hosts = foo;
-      FileInputStream fis=new FileInputStream(Util.checkTilde(foo));
+      known_hosts = filename;
+      FileInputStream fis=new FileInputStream(Util.checkTilde(filename));
       setKnownHosts(fis);
     }
     catch(FileNotFoundException e){
+      throw new JSchException(e.toString(), (Throwable)e);
     } 
   }
-  // FEAT : 0.1.50-p1 : make it public
-  //void setKnownHosts(InputStream foo) throws JSchException{
-  public void setKnownHosts(InputStream foo) throws JSchException{
+  // FEAT : 0.1.51-p1 : make it public
+  //void setKnownHosts(InputStream input) throws JSchException{
+  public void setKnownHosts(InputStream input) throws JSchException{
     pool.removeAllElements();
     StringBuffer sb=new StringBuffer();
     byte i;
     int j;
     boolean error=false;
-    // FEAT : 0.1.50-p1 : close fis when exception raise. see 'finally' bellow.
-    InputStream fis=foo;
     try{
-      //InputStream fis=foo;
+      InputStream fis=input;
       String host;
       String key=null;
       int type;
@@ -230,18 +235,11 @@ loop:
 	//System.err.println("|"+key+"|");
 
 	HostKey hk = null;
-    // FEAT : 0.1.50-p1 : Util.fromBase64 will fail with ArrayIndexOutOfBoundsException if the key is not properly encoded. So we catch/throw the error.
-    try{
         hk = new HashedHostKey(marker, host, type, 
                                Util.fromBase64(Util.str2byte(key), 0, 
                                                key.length()), comment);
-    } catch(java.lang.ArrayIndexOutOfBoundsException Ex) {
-    	throw new JSchException("KnownHosts: invalid format", Ex);
-    }
 	pool.addElement(hk);
       }
-      // FEAT : 0.1.50-p1 : close fis when exception raise. see 'finally' bellow.
-      //fis.close();
       if(error){
 	throw new JSchException("KnownHosts: invalid format");
       }
@@ -252,12 +250,12 @@ loop:
       if(e instanceof Throwable)
         throw new JSchException(e.toString(), (Throwable)e);
       throw new JSchException(e.toString());
-    } finally {
-      // FEAT : 0.1.50-p1 : close fis when exception raise
-      if (fis != null){
-        try{fis.close();}
-        catch(IOException e){}
-        }
+    }
+    finally {
+      try{ input.close(); }
+      catch(IOException e){
+        throw new JSchException(e.toString(), (Throwable)e);
+      }
     }
   }
   private void addInvalidLine(String line) throws JSchException {
@@ -321,7 +319,7 @@ loop:
 	    break;
 	  }
 */
-          // FEAT : 0.1.50-p1 : return if the key is already present; remove the old key if it has changed
+          // FEAT : 0.1.51-p1 : return if the key is already present; remove the old key if it has changed
           switch( check(host, key) ){
           case OK : return;
           case CHANGED : remove(host, hostkey.getType());
@@ -332,7 +330,7 @@ loop:
 
     hk=hostkey;
 
-    // FEAT : 0.1.50-p1 : better add the original hostkey
+    // FEAT : 0.1.51-p1 : better add the original hostkey
     //pool.addElement(hk);
     pool.addElement(hostkey);
 
@@ -378,27 +376,29 @@ loop:
   }
   public HostKey[] getHostKey(String host, String type){
     synchronized(pool){
-      int count=0;
+      java.util.ArrayList v = new java.util.ArrayList();
       for(int i=0; i<pool.size(); i++){
 	HostKey hk=(HostKey)pool.elementAt(i);
 	if(hk.type==HostKey.UNKNOWN) continue;
 	if(host==null || 
 	   (hk.isMatched(host) && 
 	    (type==null || hk.getType().equals(type)))){
-	  count++;
+          v.add(hk);
 	}
       }
-      if(count==0)return null;
-      HostKey[] foo=new HostKey[count];
-      int j=0;
-      for(int i=0; i<pool.size(); i++){
-	HostKey hk=(HostKey)pool.elementAt(i);
-	if(hk.type==HostKey.UNKNOWN) continue;
-	if(host==null || 
-	   (hk.isMatched(host) && 
-	    (type==null || hk.getType().equals(type)))){
-	  foo[j++]=hk;
-	}
+      HostKey[] foo = new HostKey[v.size()];
+      for(int i=0; i<v.size(); i++){
+        foo[i] = (HostKey)v.get(i);
+      }
+      if(host != null && host.startsWith("[") && host.indexOf("]:")>1){
+        HostKey[] tmp =
+          getHostKey(host.substring(1, host.indexOf("]:")), type);
+        if(tmp.length > 0){
+          HostKey[] bar = new HostKey[foo.length + tmp.length];
+          System.arraycopy(foo, 0, bar, 0, foo.length);
+          System.arraycopy(tmp, 0, bar, foo.length, tmp.length);
+          foo = bar;
+        }
       }
       return foo;
     }
@@ -511,7 +511,7 @@ loop:
   private synchronized MAC getHMACSHA1(){
     if(hmacsha1==null){
       try{
-        // FEAT : 0.1.50-p1 : don't want any link to Jsch
+        // FEAT : 0.1.51-p1 : don't want any link to Jsch
         //Class c=Class.forName(jsch.getConfig("hmac-sha1"));
         Class c=Class.forName(hash);
         hmacsha1=(MAC)(c.newInstance());

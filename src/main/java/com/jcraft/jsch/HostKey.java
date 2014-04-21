@@ -1,6 +1,6 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 /*
-Copyright (c) 2002-2012 ymnk, JCraft,Inc. All rights reserved.
+Copyright (c) 2002-2014 ymnk, JCraft,Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -75,7 +75,7 @@ public class HostKey{
     if(type==SSHRSA){ return Util.byte2str(sshrsa);}
     return "UNKNOWN";
   }
-  // FEAT : 0.1.50-p1 : introduce getKeyBytes(), which allow to retrieve the raw buffer
+  // FEAT : 0.1.51-p1 : introduce getKeyBytes(), which allow to retrieve the raw buffer
   public byte[] getKeyBytes(){
     return key;
   }
