@@ -1840,7 +1840,7 @@ public class ChannelSftp extends ChannelSession{
      try{
        ((MyPipedInputStream)io_in).updateReadSide();
 
-       // FEAT : 0.1.50-p1 : we don't want to transform oldpath in an absolute path !
+       // FEAT : 0.1.51-p1 : we don't want to transform oldpath in an absolute path !
        //String _oldpath=remoteAbsolutePath(oldpath);
        newpath=remoteAbsolutePath(newpath);
 

@@ -1,6 +1,6 @@
 package com.jcraft.jsch;
 
-// FEAT : 0.1.50-p1 : introduce JSchExceptionInterrupted, 
+// FEAT : 0.1.51-p1 : introduce JSchExceptionInterrupted, 
 // which could be raised when interrupted, without changing the contract (cause it herits JSchException)
 public class JSchExceptionInterrupted extends JSchException {
 
